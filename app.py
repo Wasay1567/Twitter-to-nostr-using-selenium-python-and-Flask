@@ -177,4 +177,4 @@ def run(sno):
     return render_template('task.html', allTodo=allTodo, alerts=alerts, type=type)
 
 if __name__ == "__main__":
-    app.run(port=8000, debug=True)
+    app.run(host='0.0.0.0', debug=True)
