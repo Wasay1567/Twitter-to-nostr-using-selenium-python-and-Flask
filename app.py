@@ -2,9 +2,7 @@ from flask import Flask, render_template, request, redirect, session, url_for
 from flask_sqlalchemy import SQLAlchemy
 from datetime import datetime
 import os
-from time import sleep
-from werkzeug.security import generate_password_hash, check_password_hash
-from main import main
+
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'itiswasay786@'
@@ -26,14 +24,21 @@ class Todo(db.Model):
     def __repr__(self) -> str:
         return f"{self.sno} - {self.title}"
 
-class User(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(100), unique=True, nullable=False)
-    password = db.Column(db.String(100), nullable=False)
-
 with app.app_context():
     db.create_all()
 
+def read_users_from_file(filename='users.txt'):
+    users = {}
+    if os.path.exists(filename):
+        with open(filename, 'r') as file:
+            for line in file:
+                username, password = line.strip().split(',')
+                users[username] = password
+    return users
+
+def write_user_to_file(username, password, filename='users.txt'):
+    with open(filename, 'a') as file:
+        file.write(f'{username},{password}\n')
 
 @app.route('/stop/<int:sno>')
 def stop(sno):
@@ -58,10 +63,9 @@ def login():
         print("Request form data:", request.form)
         username = request.form['username']
         password = request.form['password']
-        user = User.query.filter_by(username=username).first()
-        user = User.query.filter_by(password=password).first()
-        if user and password:
-            session['user_id'] = user.id
+        users = read_users_from_file()
+        if username in users and users[username] == password:
+            session['user_id'] = username
             print("User authenticated")
             return redirect('/')
         else:
@@ -177,4 +181,4 @@ def run(sno):
     return render_template('task.html', allTodo=allTodo, alerts=alerts, type=type)
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0', debug=True)
+    app.run(host="0.0.0.0", debug=True)
